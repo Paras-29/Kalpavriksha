@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 
+const char ACTION_UPDATE[] = "update";
+const char ACTION_DELETE[] = "delete";
+
 struct User {
     int id;
     char name[50];
@@ -84,7 +87,7 @@ void modifyUsersRecordsByID(FILE *file, FILE *temp, int targetId, const char *ac
         if (user.id == targetId) {
             recordFound = true;
 
-            if (strcmp(action, "update") == 0) {
+            if (strcmp(action, ACTION_UPDATE) == 0) {
                 printf("New Name: ");
                 getchar();
                 scanf("%[^\n]", user.name);
@@ -102,13 +105,13 @@ void modifyUsersRecordsByID(FILE *file, FILE *temp, int targetId, const char *ac
         printf("\n User not found.\n");
 
     }
-    else if (strcmp(action, "update") == 0){
+    else if (strcmp(action, ACTION_UPDATE) == 0){
         printf("\n User updated successfully.\n");
 
     }    
-    else if (strcmp(action, "delete") == 0){
+    else if (strcmp(action, ACTION_DELETE) == 0){
         printf("\n User deleted successfully.\n");
-        
+
     }    
 }
 
@@ -142,7 +145,7 @@ void updateUser() {
     printf("Enter ID: ");
     scanf("%d", &id);
 
-    modifyUser(id, "update");
+    modifyUser(id, ACTION_UPDATE);
 }
 
 void deleteUser() {
@@ -150,7 +153,7 @@ void deleteUser() {
     printf("Enter ID: ");
     scanf("%d", &id);
 
-    modifyUser(id, "delete");
+    modifyUser(id, ACTION_DELETE);
 }
 
 void runProgram() {
