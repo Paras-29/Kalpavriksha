@@ -16,21 +16,21 @@ char operatorStack[MAX_OP_STACK];
 int opStackTop = -1;
 
 
-void resetStacks()
-{
+void resetStacks(){
     numStackTop = -1;
     opStackTop = -1;
 }
 
 
-void pushNumber(int value)
-{
-    if (numStackTop < MAX_NUM_STACK - 1)
+void pushNumber(int value){
+
+    if (numStackTop < MAX_NUM_STACK - 1){
         numberStack[++numStackTop] = value;
+    }
 }
 
-int popNumber()
-{
+int popNumber(){
+
     if (numStackTop < 0){
         return INT_MIN; // stack underflow indicator
     }
@@ -38,14 +38,15 @@ int popNumber()
 }
 
 
-void pushOperator(char op)
-{
-    if (opStackTop < MAX_OP_STACK - 1)
+void pushOperator(char op){
+
+    if (opStackTop < MAX_OP_STACK - 1){
         operatorStack[++opStackTop] = op;
+    }
 }
 
-char popOperator()
-{
+char popOperator(){
+
     if (opStackTop < 0){
         return 0; // empty stack indicator
     }
@@ -53,14 +54,13 @@ char popOperator()
 }
 
 // ----- Check if character is operator -----
-int isOperatorChar(char ch)
-{
+int isOperatorChar(char ch){
     return (ch == '+' || ch == '-' || ch == '*' || ch == '/');
 }
 
 
-int getOperatorPrecedence(char op)
-{
+int getOperatorPrecedence(char op){
+
     if (op == '*' || op == '/'){
         return 2;
     }
@@ -71,12 +71,12 @@ int getOperatorPrecedence(char op)
 }
 
 // ----- Apply operator with overflow check -----
-int applyOperator(int a, char op, int b, int *errorCode)
-{
+int applyOperator(int a, char op, int b, int *errorCode){
+
     long long result = 0;
 
-    switch (op)
-    {
+    switch (op){
+
     case '+':
         result = (long long)a + (long long)b;
         break;
@@ -90,21 +90,19 @@ int applyOperator(int a, char op, int b, int *errorCode)
         break;
 
     case '/':
-        if (b == 0)
-        {
-            *errorCode = 2;
+        if (b == 0){          
+            *errorCode = 2; // division by zero
             return 0;
-        } // division by zero
+        } 
         result = a / b;
         break;
 
     default:
-        *errorCode = 3;
-        return 0; // invalid operator
+        *errorCode = 3; // invalid operator
+        return 0; 
     }
 
-    if (result > INT_MAX || result < INT_MIN)
-    {
+    if (result > INT_MAX || result < INT_MIN){
         *errorCode = 4; // overflow
         return 0;
     }
@@ -113,52 +111,52 @@ int applyOperator(int a, char op, int b, int *errorCode)
 }
 
 
-int processTopOperator(int *errorCode)
-{
+int processTopOperator(int *errorCode){
+
     int b = popNumber();
     int a = popNumber();
     char op = popOperator();
 
-    if (a == INT_MIN || b == INT_MIN)
-    {
-        *errorCode = 1;
+    if (a == INT_MIN || b == INT_MIN){
+
+        *errorCode = 1;  // stack underflow
         return 0;
-    } // stack underflow
+    }
     return applyOperator(a, op, b, errorCode);
 }
 
 // ----- Evaluate arithmetic expression -----
-int evaluateExpression(const char expr[], int *errorCode)
-{
+int evaluateExpression(const char expr[], int *errorCode){
+
     char buffer[50];
     int bufIndex;
 
     int len = strlen(expr);
-    for (int i = 0; i < len; i++)
-    {
+    for (int i = 0; i < len; i++){
+
         char ch = expr[i];
 
-        if (isdigit((unsigned char)ch))
-        {
+        if (isdigit((unsigned char)ch)){
+
             bufIndex = 0;
-            while (i < len && isdigit((unsigned char)expr[i]))
-            {
+            while (i < len && isdigit((unsigned char)expr[i])){
+
                 buffer[bufIndex++] = expr[i++];
             }
+
             buffer[bufIndex] = '\0';
             pushNumber(atoi(buffer));
             i--; // step back after number
         }
-        else if (isspace((unsigned char)ch))
-        {
+        else if (isspace((unsigned char)ch)){
             continue;
         }
-        else if (isOperatorChar(ch))
-        {
-            while (opStackTop != -1 &&
-                   getOperatorPrecedence(operatorStack[opStackTop]) >= getOperatorPrecedence(ch))
-            {
+        else if (isOperatorChar(ch)){
+
+            while (opStackTop != -1 && getOperatorPrecedence(operatorStack[opStackTop]) >= getOperatorPrecedence(ch)){
+
                 int res = processTopOperator(errorCode);
+
                 if (*errorCode != 0){
                     return 0;
                 }
@@ -166,22 +164,22 @@ int evaluateExpression(const char expr[], int *errorCode)
             }
             pushOperator(ch);
         }
-        else if (isalpha((unsigned char)ch))
-        {
+        else if (isalpha((unsigned char)ch)){
+
             *errorCode = 5;
             return 0; // contains alphabets
         }
-        else
-        {
+        else{
             *errorCode = 6;
             return 0; // invalid symbol
         }
     }
 
     // Remaining operators
-    while (opStackTop != -1)
-    {
+    while (opStackTop != -1){
+
         int res = processTopOperator(errorCode);
+
         if (*errorCode != 0){
             return 0;
         }
@@ -189,8 +187,8 @@ int evaluateExpression(const char expr[], int *errorCode)
     }
 
     int finalResult = popNumber();
-    if (finalResult == INT_MIN)
-    {
+
+    if (finalResult == INT_MIN){
         *errorCode = 1;
         return 0;
     } // stack underflow
@@ -199,15 +197,16 @@ int evaluateExpression(const char expr[], int *errorCode)
 }
 
 
-int main()
-{
+int main(){
     char expression[MAX_EXPRESSION];
 
-    while (1)
-    {
+    while (1){
+
         printf("\nEnter an arithmetic expression (or type 'exit' to quit): ");
-        if (!fgets(expression, sizeof(expression), stdin))
+
+        if (!fgets(expression, sizeof(expression), stdin)){
             break;
+        }
 
         // Remove newline
         expression[strcspn(expression, "\n")] = 0;
@@ -223,8 +222,8 @@ int main()
         int errorCode = 0;
         int result = evaluateExpression(expression, &errorCode);
 
-        switch (errorCode)
-        {
+        switch (errorCode){
+
         case 1:
             printf("Error: Stack underflow (insufficient operands)\n");
             break;
