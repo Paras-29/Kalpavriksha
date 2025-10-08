@@ -1,180 +1,201 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
-struct User{
+struct User {
     int id;
     char name[50];
     int age;
 };
 
-int idExists(int id){
-    struct User u;
+int generateNewId() {
+    struct User user;
+    int lastId = 0;
 
-    FILE *file = fopen("userRecords.txt", "r");
-    if (!file){
-        return 0;
+    FILE *file = fopen("users.txt", "r");
+
+    if (file == NULL) {
+        return 1; // First record
     }
 
-    while (fscanf(file, "%d | %[^|] | %d", &u.id, u.name, &u.age) != EOF){
-        if (u.id == id){
-            fclose(file);
-            return 1; // ID exists
-        }
+    while (fscanf(file, "%d | %[^|] | %d", &user.id, user.name, &user.age) != EOF) {
+        lastId = user.id;
     }
 
     fclose(file);
-    return 0; // ID does not exist
+    return lastId + 1;
 }
 
-void createUser(){
-    struct User u;
+void createUser() {
+    struct User user;
+    FILE *file = fopen("users.txt", "a");
 
-    printf("\nCreating User Record:\n");
-    printf("Enter User ID: ");
-    scanf("%d", &u.id);
+    if (file == NULL) {
+        printf("Error: Cannot open file!\n");
+        return;
+    }
+
+    user.id = generateNewId();
+
+    if (user.id == -1) {
+        printf("Something went wrong\n");
+        exit(2);
+    }
+
+    printf("\n--- Create User ---\n");
 
     printf("Enter User Name: ");
-    getchar();  // consume newline
-    scanf("%[^\n]", u.name);
+    getchar(); // consume newline
+    scanf("%[^\n]", user.name);
 
     printf("Enter User Age: ");
-    scanf("%d", &u.age);
+    scanf("%d", &user.age);
 
-    if(idExists(u.id)){
-        printf("Error: User ID already exists!\n");
-        return;
-    }
-
-    FILE *file = fopen("userRecords.txt", "a");
-    if (!file){
-        printf("File not open!\n");
-        return;
-    }
-
-    fprintf(file, "%d | %s | %d\n", u.id, u.name, u.age);
+    fprintf(file, "%d | %s | %d\n", user.id, user.name, user.age);
     fclose(file);
-    printf("\nUser Record Created Successfully!\n\n");
+
+    printf("\n User Record Created Successfully!\n\n");
 }
 
-void readUsers(){
-    struct User u;
+void readUsersData() {
+    struct User user;
+    FILE *file = fopen("users.txt", "r");
 
-    FILE *file = fopen("userRecords.txt", "r");
-    if (!file){
+    if (file == NULL) {
         printf("No records found.\n");
         return;
     }
 
     printf("\n--- All Users ---\n");
-    while (fscanf(file, "%d | %[^|] | %d", &u.id, u.name, &u.age) != EOF){
-        printf("%d | %s | %d\n", u.id, u.name, u.age);
+    while (fscanf(file, "%d | %[^|] | %d", &user.id, user.name, &user.age) != EOF) {
+        printf("%d | %s | %d\n", user.id, user.name, user.age);
     }
+
     fclose(file);
 }
 
-void updateUser(){
-    struct User u;
-    int id, found = 0;
+// Common function to modify for update and delete user
+void modifyUsersRecordsByID(FILE *file, FILE *temp, int targetId, const char *action) {
+    struct User user;
+    bool recordFound = false;
 
-    printf("\nUpdating User Records:\n");
-    printf("Enter ID to update: ");
-    scanf("%d", &id);
+    while (fscanf(file, "%d | %[^|] | %d", &user.id, user.name, &user.age) != EOF) {
+        if (user.id == targetId) {
+            recordFound = true;
 
-    FILE *file = fopen("userRecords.txt", "r");
-    FILE *temp = fopen("tempRecords.txt", "w");
-
-    if (!file || !temp){
-        printf("Error file opening!\n");
-        if(file) fclose(file);
-        if(temp) fclose(temp);
-        return;
-    }
-
-    while (fscanf(file, "%d | %[^|] | %d", &u.id, u.name, &u.age) != EOF){
-        if (u.id == id){
-            found = 1;
-            printf("New Name: ");
-            getchar();
-            scanf("%[^\n]", u.name);
-            printf("New Age: ");
-            scanf("%d", &u.age);
+            if (strcmp(action, "update") == 0) {
+                printf("New Name: ");
+                getchar();
+                scanf("%[^\n]", user.name);
+                printf("New Age: ");
+                scanf("%d", &user.age);
+                fprintf(temp, "%d | %s | %d\n", user.id, user.name, user.age);
+            }
+            // For delete, we simply skip writing the record
+        } else {
+            fprintf(temp, "%d | %s | %d\n", user.id, user.name, user.age);
         }
-        fprintf(temp, "%d | %s | %d\n", u.id, u.name, u.age);
     }
-    fclose(file);
-    fclose(temp);
 
-    remove("userRecords.txt");
-    rename("tempRecords.txt", "userRecords.txt");
+    if (!recordFound){
+        printf("\n User not found.\n");
 
-    if (!found){
-        printf("User Record not found.\n");
     }
-    else{
-        printf("\nUser Record updated successfully.\n");
-    }
+    else if (strcmp(action, "update") == 0){
+        printf("\n User updated successfully.\n");
+
+    }    
+    else if (strcmp(action, "delete") == 0){
+        printf("\n User deleted successfully.\n");
+        
+    }    
 }
 
-void deleteUser(){
-    struct User u;
-    int id, found = 0;
+// Common function to handle both update and delete user file opening
+void modifyUser(int id, const char *action) {
+    FILE *file = fopen("users.txt", "r");
+    FILE *temp = fopen("temp.txt", "w");
 
-    printf("\nDeleting User Record:\n");
-    printf("Enter ID to delete: ");
-    scanf("%d", &id);
-
-    FILE *file = fopen("userRecords.txt", "r");
-    FILE *temp = fopen("tempRecords.txt", "w");
-
-    if (!file || !temp){
-        printf("Error file opening!\n");
-        if(file) fclose(file);
-        if(temp) fclose(temp);
+    if (file == NULL) {
+        printf("Error in opening users file!\n");
         return;
     }
 
-    while (fscanf(file, "%d | %[^|] | %d", &u.id, u.name, &u.age) != EOF){
-        if (u.id == id){
-            found = 1;
-            continue;  // skip this user
-        }
-        fprintf(temp, "%d | %s | %d\n", u.id, u.name, u.age);
+    if (temp == NULL) {
+        printf("Error in opening temporary file!\n");
+        return;
     }
+
+    modifyUsersRecordsByID(file, temp, id, action);
+
     fclose(file);
     fclose(temp);
 
-    remove("userRecords.txt");
-    rename("tempRecords.txt", "userRecords.txt");
+    remove("users.txt");
+    rename("temp.txt", "users.txt");
+}
 
-    if (!found){
-        printf("User not found.\n");
-    }
-    else{
-        printf("\nUser deleted successfully.\n");
-    }
+
+void updateUser() {
+    int id;
+    printf("Enter ID: ");
+    scanf("%d", &id);
+
+    modifyUser(id, "update");
+}
+
+void deleteUser() {
+    int id;
+    printf("Enter ID: ");
+    scanf("%d", &id);
+
+    modifyUser(id, "delete");
+}
+
+void runProgram() {
+    int choice;
+
+    do {
+        printf("\n\n--- User Records ---\n");
+        printf("1. Create User\n");
+        printf("2. View All Users\n");
+        printf("3. Update User\n");
+        printf("4. Delete User\n");
+        printf("5. Exit\n");
+        printf("Choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                createUser();
+                break;
+
+            case 2:
+                readUsersData();
+                break;
+
+            case 3:
+                updateUser();
+                break;
+
+            case 4:
+               
+                deleteUser();
+                break;
+
+            case 5:
+                printf("Exiting...\n");
+                break;
+
+            default:
+                printf("Invalid choice! Please try again.\n");
+        }
+
+    } while (choice != 5);
 }
 
 int main() {
-    int op;
-    do {
-        printf("\n\nUsers Records, perform the below operations");
-        printf("\n1. Create\n2. Read\n3. Update\n4. Delete\n5. Exit\n\nChoice: ");
-        scanf("%d", &op);
-
-        if (op == 1)
-            createUser();
-        else if (op == 2)
-            readUsers();
-        else if (op == 3)
-            updateUser();
-        else if (op == 4)
-            deleteUser();
-        else if (op == 5)
-            printf("Exiting...\n");
-        else
-            printf("Invalid choice, choose between 1 to 5!\n");
-
-    } while (op != 5);
-
+    runProgram();
     return 0;
 }
