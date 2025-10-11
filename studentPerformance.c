@@ -1,154 +1,190 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
-#define MAX_STUDENTS 100
-#define MAX_SUBJECTS 3
+const int MAX_STUDENTS = 100;
+const int MAX_SUBJECTS = 3;
+const int MAX_MARKS = 100;
+const int MIN_MARKS = 0;
 
-struct Student {
+typedef struct {
     int rollNo;
     char name[50];
     float marks[3];
-};
+} Student;
 
-// Function prototypes
-void inputStudentData(struct Student students[], int numOfStudents);
-float totalMarks(struct Student student);
-float totalAverage(struct Student student);
-char calculateGrade(float average);
-void printPattern(char grade);
-void printStudentData(struct Student students[], int numOfStudents);
-void printRollNumbers(struct Student students[], int index, int numOfStudents);
-void runProgram();
-
-
-void inputStudentData(struct Student students[], int numOfStudents) {
-    for (int i = 0; i < numOfStudents; i++) {
-        printf("\nEnter details for Student %d\n", i + 1);
-        printf("Enter Roll Number: ");
-        scanf("%d", &students[i].rollNo);
-
-        printf("Enter Name: ");
-        scanf("%s", students[i].name);
-
-        printf("Enter marks in 3 subjects: ");
-        for (int j = 0; j < MAX_SUBJECTS; j++) {
-            scanf("%f", &students[i].marks[j]);
+bool isDuplicateRoll(const Student students[], int count, int rollNo) {
+    for (int i = 0; i < count; i++) {
+        if (students[i].rollNo == rollNo) {
+            return true;
         }
     }
+    return false;
 }
 
-float totalMarks(struct Student student) {
+float calculateTotalMarks(const Student student) {
     float total = 0;
-
     for (int i = 0; i < MAX_SUBJECTS; i++) {
         total += student.marks[i];
     }
-
     return total;
 }
 
-float totalAverage(struct Student student) {
-    return totalMarks(student) / MAX_SUBJECTS;
+float calculateAverage(const Student student) {
+    return calculateTotalMarks(student) / MAX_SUBJECTS;
 }
 
 char calculateGrade(float average) {
     if (average >= 85) {
         return 'A';
-    } else if (average >= 70) {
+    }
+    else if (average >= 70) {
         return 'B';
-    } else if (average >= 50) {
+    }
+    else if (average >= 50) {
         return 'C';
-    } else if (average >= 35) {
+    }
+    else if (average >= 35) {
         return 'D';
-    } else {
+    }
+    else {
         return 'F';
     }
 }
 
-void printPattern(char grade) {
-
+void printPerformancePattern(char grade) {
     int stars = 0;
-    switch (grade) {
-        case 'A': 
-            stars = 5; 
-            break;
-        case 'B': 
-            stars = 4; 
-            break;
-        case 'C': 
-            stars = 3; 
-            break;
-        case 'D': 
-            stars = 2; 
-            break;
-        default: 
-            stars = 0; 
-            break;
+
+    if (grade == 'A') {
+        stars = 5;
+    }
+    else if (grade == 'B') {
+        stars = 4;
+    }
+    else if (grade == 'C') {
+        stars = 3;
+    }
+    else if (grade == 'D') {
+        stars = 2;
+    }
+    else {
+        stars = 0;
     }
 
-    printf("Performance: ");
-    for (int i = 0; i < stars; i++) {
-        printf("*");
+    if (stars > 0) {
+        printf("Performance: ");
+        for (int i = 0; i < stars; i++) {
+            printf("*");
+        }
+        printf("\n");
     }
-    printf("\n");
 }
 
+void printStudentData(const Student students[], int numOfStudents) {
 
-void printStudentData(struct Student students[], int numOfStudents) {
     for (int i = 0; i < numOfStudents; i++) {
+
+        if (students[i].rollNo == 0) {
+            continue;
+        }
+
+        const float total = calculateTotalMarks(students[i]);
+        const float average = calculateAverage(students[i]);
+        const char grade = calculateGrade(average);
+
         printf("\nRoll: %d\n", students[i].rollNo);
         printf("Name: %s\n", students[i].name);
-
-        float total = totalMarks(students[i]);
-        float average = totalAverage(students[i]);
-        char grade = calculateGrade(average);
-
         printf("Total: %.2f\n", total);
         printf("Average: %.2f\n", average);
         printf("Grade: %c\n", grade);
 
-        // Skip stars if grade is F
         if (grade == 'F') {
             continue;
         }
         else{
-            printPattern(grade);
+            printPerformancePattern(grade);
         }
     }
 }
 
-// Recursive function to print roll numbers
-void printRollNumbers(struct Student students[], int index, int numOfStudents) {
+void printRollNumbers(const Student students[], int index, int numOfStudents) {
     if (index == numOfStudents) {
         return;
     }
-    printf("%d ", students[index].rollNo);
+    if (students[index].rollNo != 0){
+        printf("%d ", students[index].rollNo);
+    }
     printRollNumbers(students, index + 1, numOfStudents);
 }
 
-void runProgram() {
-    struct Student students[MAX_STUDENTS];
-    int numOfStudents;
-
-    printf("Enter number of students: ");
-    scanf("%d", &numOfStudents);
-
-    if (numOfStudents <= 0 || numOfStudents > MAX_STUDENTS) {
-    printf("Invalid number of students!\n");
-    return;
+void sortStudentsByRollNo(Student students[], int numOfStudents) {
+    for (int i = 0; i < numOfStudents - 1; i++) {
+        for (int j = i + 1; j < numOfStudents; j++) {
+            if (students[i].rollNo > students[j].rollNo) {
+                Student temp = students[i];
+                students[i] = students[j];
+                students[j] = temp;
+            }
+        }
+    }
 }
 
 
-    inputStudentData(students, numOfStudents);
+void inputStudentData(Student students[], int *numOfStudents) {
+    
+    if (*numOfStudents > MAX_STUDENTS) {
+        printf("Number of students exceeds maximum limit (%d). Setting to max.\n", MAX_STUDENTS);
+        *numOfStudents = MAX_STUDENTS;
+    }
+
+    for (int i = 0; i < *numOfStudents; i++) {
+       
+        int rollNo;
+        scanf("%d", &rollNo);
+
+        if (isDuplicateRoll(students, i, rollNo)) {
+            printf("Duplicate roll number found. Skipping entry.\n");
+            students[i].rollNo = 0; 
+            continue;
+        }
+
+        students[i].rollNo = rollNo;
+
+        scanf("%s", students[i].name);
+
+        for (int j = 0; j < MAX_SUBJECTS; j++) {
+            do {
+                
+                scanf("%f", &students[i].marks[j]);
+
+                if (students[i].marks[j] < MIN_MARKS || students[i].marks[j] > MAX_MARKS) {
+                    printf(" Invalid marks! Please enter a value between 0 and 100.\n");
+                }
+
+            } while (students[i].marks[j] < MIN_MARKS || students[i].marks[j] > MAX_MARKS);
+        }
+    }
+}
+
+void studentPerformance() {
+    Student students[MAX_STUDENTS];
+
+    int numOfStudents = 0;
+    scanf("%d", &numOfStudents);
+
+    inputStudentData(students, &numOfStudents);
+
+    sortStudentsByRollNo(students, numOfStudents);
+
     printStudentData(students, numOfStudents);
 
-    printf("\nRoll Numbers of all students: ");
-    printRollNumbers(students, 0, numOfStudents);
+    printf("\nList of Roll Numbers (via recursion): ");
+    int startIndex = 0;
+    printRollNumbers(students, startIndex, numOfStudents);
     printf("\n");
 }
 
 int main() {
-    runProgram();
+    studentPerformance();
     return 0;
 }
