@@ -7,11 +7,25 @@ const int MAX_SUBJECTS = 3;
 const int MAX_MARKS = 100;
 const int MIN_MARKS = 0;
 
+const int GRADE_A_MIN = 85;
+const int GRADE_B_MIN = 70;
+const int GRADE_C_MIN = 50;
+const int GRADE_D_MIN = 35;
+
+
 typedef struct {
     int rollNo;
     char name[50];
     float marks[3];
 } Student;
+
+typedef enum {
+    GRADE_A = 'A',
+    GRADE_B = 'B',
+    GRADE_C = 'C',
+    GRADE_D = 'D',
+    GRADE_F = 'F'
+} Grade;
 
 bool isDuplicateRoll(const Student students[], int count, int rollNo) {
     for (int i = 0; i < count; i++) {
@@ -35,36 +49,36 @@ float calculateAverage(const Student student) {
 }
 
 char calculateGrade(float average) {
-    if (average >= 85) {
-        return 'A';
+    if (average >= GRADE_A_MIN) {
+        return GRADE_A;
     }
-    else if (average >= 70) {
-        return 'B';
+    else if (average >= GRADE_B_MIN) {
+        return GRADE_B;
     }
-    else if (average >= 50) {
-        return 'C';
+    else if (average >= GRADE_C_MIN) {
+        return GRADE_C;
     }
-    else if (average >= 35) {
-        return 'D';
+    else if (average >= GRADE_D_MIN) {
+        return GRADE_D;
     }
     else {
-        return 'F';
+        return GRADE_F;
     }
 }
 
 void printPerformancePattern(char grade) {
     int stars = 0;
 
-    if (grade == 'A') {
+    if (grade == GRADE_A) {
         stars = 5;
     }
-    else if (grade == 'B') {
+    else if (grade == GRADE_B) {
         stars = 4;
     }
-    else if (grade == 'C') {
+    else if (grade == GRADE_C) {
         stars = 3;
     }
-    else if (grade == 'D') {
+    else if (grade == GRADE_D) {
         stars = 2;
     }
     else {
@@ -131,40 +145,46 @@ void sortStudentsByRollNo(Student students[], int numOfStudents) {
 
 
 void inputStudentData(Student students[], int *numOfStudents) {
-    
     if (*numOfStudents > MAX_STUDENTS) {
         printf("Number of students exceeds maximum limit (%d). Setting to max.\n", MAX_STUDENTS);
         *numOfStudents = MAX_STUDENTS;
     }
 
     for (int i = 0; i < *numOfStudents; i++) {
-       
-        int rollNo;
-        scanf("%d", &rollNo);
+        bool isValidEntry;
 
-        if (isDuplicateRoll(students, i, rollNo)) {
-            printf("Duplicate roll number found. Skipping entry.\n");
-            students[i].rollNo = 0; 
-            continue;
-        }
+        do {
+            isValidEntry = true; 
 
-        students[i].rollNo = rollNo;
+            printf("");
+            scanf("%d", &students[i].rollNo);
 
-        scanf("%s", students[i].name);
+          
+            if (isDuplicateRoll(students, i, students[i].rollNo)) {
+                printf("Duplicare roll number! Enter all deatails again.\n");
+                isValidEntry = false;
 
-        for (int j = 0; j < MAX_SUBJECTS; j++) {
-            do {
-                
+                while (getchar() != '\n'); // flush input buffer
+                continue; 
+            }
+
+            scanf("%s", students[i].name);
+        
+            for (int j = 0; j < MAX_SUBJECTS; j++) {
                 scanf("%f", &students[i].marks[j]);
 
                 if (students[i].marks[j] < MIN_MARKS || students[i].marks[j] > MAX_MARKS) {
-                    printf(" Invalid marks! Please enter a value between 0 and 100.\n");
+                    printf("Invalid marks! Marks between 0 to 100. Please enter all details again.\n");
+                    isValidEntry = false;
+                    while (getchar() != '\n'); // flush invalid input
+                    break; 
                 }
+            }
 
-            } while (students[i].marks[j] < MIN_MARKS || students[i].marks[j] > MAX_MARKS);
-        }
+        } while (!isValidEntry); 
     }
 }
+
 
 void studentPerformance() {
     Student students[MAX_STUDENTS];
