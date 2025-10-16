@@ -1,0 +1,156 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+#define MAX_PIXEL_VALUE 255
+
+void printMatrix(int *matrix, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            printf("%4d", *(matrix + i * n + j));
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
+
+
+int getAllNeighborAverage(int* sonarImage, int matrixSize, int row, int col) {
+    int sum = 0, count = 0;
+
+    for (int deltaRow = -1; deltaRow <= 1; deltaRow++) {
+        for (int deltaCol = -1; deltaCol <= 1; deltaCol++) {
+
+            int newRow = row + deltaRow;
+            int newCol = col + deltaCol;
+
+            if (newRow >= 0 && newRow < matrixSize && newCol >= 0 && newCol < matrixSize) {
+           
+                sum += *(sonarImage + newRow * matrixSize + newCol) % MAX_PIXEL_VALUE;
+                count++;
+            }
+        }
+    }
+    return sum / count;
+}
+
+void encodeSmoothedValues(int* sonarImage, int matrixSize) {
+    for (int row = 0; row < matrixSize; row++) {
+        for (int col = 0; col < matrixSize; col++) {
+            int avg = getAllNeighborAverage(sonarImage, matrixSize, row, col);
+    
+            *(sonarImage + row * matrixSize + col) += avg * MAX_PIXEL_VALUE;
+        }
+    }
+}
+
+void decodeSmoothedValues(int* sonarImage, int matrixSize) {
+    for (int row = 0; row < matrixSize; row++) {
+        for (int col = 0; col < matrixSize; col++) {
+           
+            *(sonarImage + row * matrixSize + col) /= MAX_PIXEL_VALUE;
+        }
+    }
+}
+
+void applySmoothingFilter(int* sonarImage, int matrixSize) {
+    encodeSmoothedValues(sonarImage, matrixSize);
+    decodeSmoothedValues(sonarImage, matrixSize);
+}
+
+
+void transposeMatrix(int *matrix, int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            int *a = matrix + i * n + j;
+            int *b = matrix + j * n + i;
+            int temp = *a;
+            *a = *b;
+            *b = temp;
+        }
+    }
+}
+
+void reverseRows(int *matrix, int n) {
+    for (int i = 0; i < n; i++) {
+        int *rowStart = matrix + i * n;
+        int *rowEnd = rowStart + n - 1;
+        while (rowStart < rowEnd) {
+            int temp = *rowStart;
+            *rowStart = *rowEnd;
+            *rowEnd = temp;
+            rowStart++;
+            rowEnd--;
+        }
+    }
+}
+
+void rotateMatrix90Clockwise(int *matrix, int n) {
+    transposeMatrix(matrix, n);
+    reverseRows(matrix, n);
+}
+
+
+void getsonarMatrixInput(int *matrix, int n) {
+    
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            *(matrix + i * n + j) = rand() % MAX_PIXEL_VALUE; 
+        }
+    }
+}
+
+
+int getMatrixSize() {
+    
+    int size;
+    
+    while(1){
+        printf("Enter matrix size (2-10): ");
+        scanf("%d", &size);
+        
+        if (size >= 2 && size <= 10) {
+            return size;
+        }
+        
+        printf("Invalid matrix size. Please try between 2 and 10\n");
+    }
+    
+}
+
+
+void sonarImageMatrixSimulation() {
+    
+    int matrixSize = getMatrixSize();
+    
+    int *sonarMatrix = (int*)malloc(matrixSize * matrixSize * sizeof(int));
+    
+    if(sonarMatrix == NULL){
+        printf("Memory is not allocated.\n");
+        return;
+    }
+
+    getsonarMatrixInput(sonarMatrix, matrixSize);
+    printf("\nOriginal Randomly Generated Matrix:\n");
+    printMatrix(sonarMatrix, matrixSize);
+    
+    rotateMatrix90Clockwise(sonarMatrix, matrixSize);
+    printf("Matrix after 90 degree Clockwise Rotation:\n");
+    printMatrix(sonarMatrix, matrixSize);
+    
+    applySmoothingFilter(sonarMatrix, matrixSize);
+    printf("Matrix after Applying 3*3 Smoothing Filter:\n");
+    printMatrix(sonarMatrix, matrixSize);
+    
+    free(sonarMatrix);
+}
+
+
+int main() {
+    srand(time(0)); 
+
+    sonarImageMatrixSimulation();
+    
+    return 0;
+}
