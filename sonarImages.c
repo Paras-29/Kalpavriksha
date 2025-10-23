@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define MAX_PIXEL_VALUE 255
+#define MAX_PIXEL_VALUE 256
 
 void printMatrix(int *matrix, int n) {
     for (int i = 0; i < n; i++) {
@@ -14,19 +14,26 @@ void printMatrix(int *matrix, int n) {
     printf("\n");
 }
 
+void swapValues(int *firstValue, int *secondValue) {
+    int tempValue = *firstValue;
+    *firstValue = *secondValue;
+    *secondValue = tempValue;
+}
+
+int isValidCell(int matrixSize, int row, int col) {
+    return (row >= 0 && row < matrixSize && col >= 0 && col < matrixSize);
+}
 
 
-int getAllNeighborAverage(int* sonarImage, int matrixSize, int row, int col) {
+int getAllNeighborAverage(int *sonarImage, int matrixSize, int row, int col) {
     int sum = 0, count = 0;
 
     for (int deltaRow = -1; deltaRow <= 1; deltaRow++) {
         for (int deltaCol = -1; deltaCol <= 1; deltaCol++) {
-
             int newRow = row + deltaRow;
             int newCol = col + deltaCol;
 
-            if (newRow >= 0 && newRow < matrixSize && newCol >= 0 && newCol < matrixSize) {
-           
+            if (isValidCell(matrixSize, newRow, newCol)) {
                 sum += *(sonarImage + newRow * matrixSize + newCol) % MAX_PIXEL_VALUE;
                 count++;
             }
@@ -65,9 +72,8 @@ void transposeMatrix(int *matrix, int n) {
         for (int j = i + 1; j < n; j++) {
             int *a = matrix + i * n + j;
             int *b = matrix + j * n + i;
-            int temp = *a;
-            *a = *b;
-            *b = temp;
+
+            swapValues(a, b);
         }
     }
 }
@@ -77,9 +83,9 @@ void reverseRows(int *matrix, int n) {
         int *rowStart = matrix + i * n;
         int *rowEnd = rowStart + n - 1;
         while (rowStart < rowEnd) {
-            int temp = *rowStart;
-            *rowStart = *rowEnd;
-            *rowEnd = temp;
+
+            swapValues(rowStart, rowEnd);
+
             rowStart++;
             rowEnd--;
         }
@@ -92,13 +98,17 @@ void rotateMatrix90Clockwise(int *matrix, int n) {
 }
 
 
-void getsonarMatrixInput(int *matrix, int n) {
+void inputSonarMatrix(int *matrix, int n) {
     
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             *(matrix + i * n + j) = rand() % MAX_PIXEL_VALUE; 
         }
     }
+}
+
+int isValidMatrixSize(int size) {
+    return (size >= 2 && size <= 10);
 }
 
 
@@ -110,11 +120,14 @@ int getMatrixSize() {
         printf("Enter matrix size (2-10): ");
         scanf("%d", &size);
         
-        if (size >= 2 && size <= 10) {
+        if (!isValidMatrixSize(size)) {
+            printf("Invalid matrix size. Please try between 2 and 10\n");
+        }
+        else {
             return size;
         }
-        
-        printf("Invalid matrix size. Please try between 2 and 10\n");
+
+            
     }
     
 }
@@ -131,7 +144,7 @@ void sonarImageMatrixSimulation() {
         return;
     }
 
-    getsonarMatrixInput(sonarMatrix, matrixSize);
+    inputSonarMatrix(sonarMatrix, matrixSize);
     printf("\nOriginal Randomly Generated Matrix:\n");
     printMatrix(sonarMatrix, matrixSize);
     
