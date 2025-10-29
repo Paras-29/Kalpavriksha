@@ -13,6 +13,10 @@
 #define MIN_QUANTITY 0
 #define MAX_QUANTITY 1000000
 
+const char UPPER_A = 'A';
+const char UPPER_Z = 'Z';
+const int CASE_DIFF = 'a' - 'A';
+
 typedef struct {
     int id;
     char name[NAME_LEN];
@@ -22,6 +26,7 @@ typedef struct {
 
 void runInventoryManagement();
 void inputInitialProducts(Product *products ,int numOfProduct);
+void inputProduct(Product *products, int index, int totalProducts);
 void addProduct(Product **products, int *numOfProduct);
 void viewAllProducts(Product *products, int numOfProduct);
 void updateQuantity(Product *products, int numOfProduct);
@@ -34,31 +39,30 @@ void clearMemory(Product *products);
 bool isValidRangeInt(int val, int min, int max);
 bool isValidRangeFloat(float val, float min, float max);
 bool isDuplicateId(Product *products, int numOfProduct, int id);
-
+bool isDuplicateName(Product *products, int numOfProduct, const char *name);
+bool containsSubstring(const char *str, const char *substr);
+void removeNewline(char *str);
 
 int main() {
-
     runInventoryManagement();
-
     return 0;
 }
 
-
 void runInventoryManagement(){
-
     int numOfProducts;
     Product *products = NULL;
 
-    do{
+    while (1) {
         printf("Enter initial number of products: ");
         scanf("%d", &numOfProducts);
 
-        if(!isValidRangeInt(numOfProducts, MIN_PRODUCTS, MAX_PRODUCTS)) {
-            printf("Invalid number of products. Must be between %d and %d.\n", MIN_PRODUCTS, MAX_PRODUCTS);
+        if (!isValidRangeInt(numOfProducts, MIN_PRODUCTS, MAX_PRODUCTS)) {
+            printf("Invalid number of products. Must be between %d and %d.\n",
+                   MIN_PRODUCTS, MAX_PRODUCTS);
+        } else {
+            break; 
         }
-
-    }while((!isValidRangeInt(numOfProducts, MIN_PRODUCTS, MAX_PRODUCTS)));
-
+    }
 
     products = (Product *)calloc(numOfProducts, sizeof(Product));
 
@@ -76,53 +80,9 @@ void runInventoryManagement(){
     printf("Memory released successfully. Exiting program...\n");
 }
 
-
 void inputInitialProducts(Product *products , int numOfProduct){
-
-       for (int i = 0; i < numOfProduct; i++) {
-            printf("\nEnter details for product %d:\n", i + 1);
-
-        do {
-            printf("Product ID: ");
-            scanf("%d", &products[i].id);
-
-
-            if((!isValidRangeInt(products[i].id, MIN_ID, MAX_ID))){
-                printf("Invalid product id. Must be between %d and %d.\n", MIN_ID, MAX_ID);
-            }
-            else if (isDuplicateId(products, i, products[i].id)) {
-            printf("Duplicate ID! Please enter a unique product ID.\n");
-            }
-
-        } while (!isValidRangeInt(products[i].id, MIN_ID, MAX_ID)||
-         isDuplicateId(products, i, products[i].id));
-
-        while (getchar() != '\n');
-        printf("Product Name: ");
-        fgets(products[i].name, NAME_LEN, stdin);
-        products[i].name[strcspn(products[i].name, "\n")] = '\0';
-
-
-        do {
-            printf("Product Price: ");
-            scanf("%f", &products[i].price);
-
-            if((!isValidRangeFloat(products[i].price, MIN_PRICE, MAX_PRICE))){
-                printf("Invalid product price. Must be between %.2f and %.2f.\n", MIN_PRICE, MAX_PRICE);
-            }
-
-        } while (!isValidRangeFloat(products[i].price, MIN_PRICE, MAX_PRICE));
-
-
-        do {
-            printf("Product Quantity: ");
-            scanf("%d", &products[i].quantity);
-
-            if((!isValidRangeInt(products[i].quantity, MIN_QUANTITY, MAX_QUANTITY))){
-                printf("Invalid product quantity. Must be between %d and %d.\n", MIN_QUANTITY, MAX_QUANTITY);
-            }
-
-        } while (!isValidRangeInt(products[i].quantity, MIN_QUANTITY, MAX_QUANTITY));
+    for (int i = 0; i < numOfProduct; i++) {
+        inputProduct(products, i, numOfProduct);
     }
 }
 
@@ -172,6 +132,55 @@ void inventoryMenu(Product **products, int *numOfProduct) {
     } while (choice != 8);
 }
 
+void inputProduct(Product *products, int index, int totalProducts) {
+    printf("\nEnter details for product %d:\n", index + 1);
+
+    getchar(); 
+    do {
+        printf("Product ID: ");
+        scanf("%d", &products[index].id);
+
+        if (!isValidRangeInt(products[index].id, MIN_ID, MAX_ID)) {
+            printf("Invalid product id. Must be between %d and %d.\n", MIN_ID, MAX_ID);
+        }
+        else if (isDuplicateId(products, index, products[index].id)) {
+            printf("Duplicate ID! Please enter a unique product ID.\n");
+        }
+
+    } while (!isValidRangeInt(products[index].id, MIN_ID, MAX_ID) || isDuplicateId(products, index, products[index].id));
+
+    while (getchar() != '\n');
+        
+    do {
+        printf("Product Name: ");
+        fgets(products[index].name, NAME_LEN, stdin);
+        removeNewline(products[index].name);
+
+        if (isDuplicateName(products, index, products[index].name)) {
+            printf("Duplicate name found! Please enter a unique product name.\n");
+        }
+    } while (isDuplicateName(products, index, products[index].name));
+
+    do {
+        printf("Product Price: ");
+        scanf("%f", &products[index].price);
+
+        if (!isValidRangeFloat(products[index].price, MIN_PRICE, MAX_PRICE)) {
+            printf("Invalid product price. Must be between %.2f and %.2f.\n", MIN_PRICE, MAX_PRICE);
+        }
+
+    } while (!isValidRangeFloat(products[index].price, MIN_PRICE, MAX_PRICE));
+
+    do {
+        printf("Product Quantity: ");
+        scanf("%d", &products[index].quantity);
+
+        if (!isValidRangeInt(products[index].quantity, MIN_QUANTITY, MAX_QUANTITY)) {
+            printf("Invalid product quantity. Must be between %d and %d.\n", MIN_QUANTITY, MAX_QUANTITY);
+        }
+    } while (!isValidRangeInt(products[index].quantity, MIN_QUANTITY, MAX_QUANTITY));
+}
+
 bool isDuplicateId(Product *products, int numOfProduct, int id) {
     for (int i = 0; i < numOfProduct; i++) {
         if (products[i].id == id) {
@@ -182,9 +191,8 @@ bool isDuplicateId(Product *products, int numOfProduct, int id) {
 }
 
 void addProduct(Product **products, int *numOfProduct) {
-
     if (*numOfProduct >= MAX_PRODUCTS) {
-        printf("Cannot add more products. Maximum limit reached.\n");
+        printf("Cannot add more products. Maximum limit (%d) reached.\n", MAX_PRODUCTS);
         return;
     }
 
@@ -201,26 +209,32 @@ void addProduct(Product **products, int *numOfProduct) {
         printf("Product ID: ");
         scanf("%d", &newProduct->id);
 
-        if((!isValidRangeInt(newProduct->id, MIN_ID, MAX_ID)) ){
-                printf("Invalid product id. Must be between %d and %d.\n", MIN_ID, MAX_ID);
+        if (!isValidRangeInt(newProduct->id, MIN_ID, MAX_ID)) {
+            printf("Invalid product id. Must be between %d and %d.\n", MIN_ID, MAX_ID);
         }
         else if (isDuplicateId(*products, *numOfProduct, newProduct->id)) {
-        printf("Duplicate ID! Please enter a unique product ID.\n");
+            printf("Duplicate ID! Please enter a unique product ID.\n");
         }
             
-    } while (!isValidRangeInt(newProduct->id, MIN_ID, MAX_ID) ||
-         isDuplicateId(*products, *numOfProduct, newProduct->id));
+    } while (!isValidRangeInt(newProduct->id, MIN_ID, MAX_ID) || isDuplicateId(*products, *numOfProduct, newProduct->id));
 
-    while (getchar() != '\n');     
-    printf("Product Name: ");
-    fgets(newProduct->name, NAME_LEN, stdin);
-    newProduct->name[strcspn(newProduct->name, "\n")] = '\0';
+    while (getchar() != '\n');
+        
+    do {
+        printf("Product Name: ");
+        fgets(newProduct->name, NAME_LEN, stdin);
+        removeNewline(newProduct->name);
+
+        if (isDuplicateName(*products, *numOfProduct, newProduct->name)) {
+            printf("Duplicate name found! Please enter a unique product name.\n");
+        }
+    } while (isDuplicateName(*products, *numOfProduct, newProduct->name));
 
     do {
         printf("Product Price: ");
         scanf("%f", &newProduct->price);
 
-        if((!isValidRangeFloat(newProduct->price, MIN_PRICE, MAX_PRICE))){
+        if (!isValidRangeFloat(newProduct->price, MIN_PRICE, MAX_PRICE)) {
                 printf("Invalid product price. Must be between %.2f and %.2f.\n", MIN_PRICE, MAX_PRICE);
         }
 
@@ -230,7 +244,7 @@ void addProduct(Product **products, int *numOfProduct) {
         printf("Product Quantity: ");
         scanf("%d", &newProduct->quantity);
 
-        if((!isValidRangeInt(newProduct->quantity, MIN_QUANTITY, MAX_QUANTITY))){
+        if (!isValidRangeInt(newProduct->quantity, MIN_QUANTITY, MAX_QUANTITY)) {
                 printf("Invalid product quantity. Must be between %d and %d.\n", MIN_QUANTITY, MAX_QUANTITY);
         }
 
@@ -265,7 +279,7 @@ void updateQuantity(Product *products, int numOfProduct) {
                 printf("Enter new Quantity: ");
                 scanf("%d", &newQty);
 
-                if((!isValidRangeInt(newQty, MIN_QUANTITY, MAX_QUANTITY))){
+                if (!isValidRangeInt(newQty, MIN_QUANTITY, MAX_QUANTITY)) {
                 printf("Invalid product quantity. Must be between %d and %d.\n", MIN_QUANTITY, MAX_QUANTITY);
             }
 
@@ -278,7 +292,7 @@ void updateQuantity(Product *products, int numOfProduct) {
         }
     }
 
-    if (!isFound){
+    if (!isFound) {
         printf("Product not found.\n");
     }
 }
@@ -309,11 +323,11 @@ void searchByName(Product *products, int numOfProduct) {
     while (getchar() != '\n');
     printf("Enter name to search (partial allowed): ");
     fgets(keyword, NAME_LEN, stdin);
-    keyword[strcspn(keyword, "\n")] = '\0';
+    removeNewline(keyword);
 
     printf("Products Found:\n");
     for (int i = 0; i < numOfProduct; i++) {
-        if (strstr(products[i].name, keyword) != NULL) {
+        if (containsSubstring(products[i].name, keyword)) {
             printf("Product ID: %d | Name: %s | Price: %.2f | Quantity: %d\n",
                    products[i].id, products[i].name, products[i].price, products[i].quantity);
             isFound = true;
@@ -323,12 +337,9 @@ void searchByName(Product *products, int numOfProduct) {
     if (!isFound){
         printf("No matching products found.\n");
     }    
-
-    
 }
 
 void searchByPriceRange(Product *products, int numOfProduct) {
-
     float minPrice, maxPrice;
     printf("Enter minimum price: ");
     scanf("%f", &minPrice);
@@ -387,3 +398,78 @@ bool isValidRangeInt(int val, int min, int max) {
 bool isValidRangeFloat(float val, float min, float max) {
     return val >= min && val <= max;
 }
+
+void removeNewline(char *str) {
+    int i = 0;
+    while (str[i] != '\0') {
+        if (str[i] == '\n') {
+            str[i] = '\0';
+            break;
+        }
+        i++;
+    }
+}
+
+bool containsSubstring(const char *str, const char *substr) {
+    if (!*substr) {
+        return true; 
+    }
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        int j = 0;
+
+        while (str[i + j] != '\0' && substr[j] != '\0') {
+            char c1 = str[i + j];
+            char c2 = substr[j];
+
+            if (c1 >= UPPER_A && c1 <= UPPER_Z) {
+                c1 += CASE_DIFF;
+            }
+            if (c2 >= UPPER_A && c2 <= UPPER_Z) {
+                c2 += CASE_DIFF;
+            }
+
+            if (c1 != c2){
+                break;
+            }
+            j++;
+        }
+
+        if (substr[j] == '\0'){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isDuplicateName(Product *products, int numOfProduct, const char *name) {
+    for (int i = 0; i < numOfProduct; i++) {
+        int j = 0;
+
+        while (products[i].name[j] != '\0' && name[j] != '\0') {
+            char c1 = products[i].name[j];
+            char c2 = name[j];
+       
+            if (c1 >= UPPER_A && c1 <= UPPER_Z) {
+                c1 += CASE_DIFF;
+            }
+            if (c2 >= UPPER_A && c2 <= UPPER_Z) {
+                c2 += CASE_DIFF;
+            }
+            if (c1 != c2){
+                break;
+            }
+            j++;
+        }
+
+        if (products[i].name[j] == '\0' && name[j] == '\0'){
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+
+
