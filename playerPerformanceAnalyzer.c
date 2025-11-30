@@ -14,11 +14,18 @@
 
 const float total_percent = 100.0f;
 
+typedef enum {
+    ROLE_BATSMAN = 1,
+    ROLE_BOWLER = 2,
+    ROLE_ALLROUNDER = 3
+} PlayerRole;
+
 typedef struct PlayerNode {
     int playerId;
     char name[MAX_NAME];
     char teamName[MAX_NAME];
     char role[MAX_ROLE_NAME];
+    PlayerRole roleEnum;
     int totalRuns;
     float battingAverage;
     float strikeRate;
@@ -99,12 +106,17 @@ bool isValidTeamSize(int teamId) {
     return count >= MIN_PLAYER && count <= MAX_PLAYER;
 }
 
+const char* roleToString(PlayerRole role) {
+    if (role == ROLE_BATSMAN) return "Batsman";
+    if (role == ROLE_BOWLER) return "Bowler";
+    return "All-rounder";
+}
 
 float calculatePerformance(PlayerNode *p) {
-    if (stringCompare(p->role, "Batsman")){
+    if (p->roleEnum == ROLE_BATSMAN){
         return (p->battingAverage * p->strikeRate) / total_percent;
     }
-    else if (stringCompare(p->role, "Bowler")){
+    else if (p->roleEnum == ROLE_BOWLER){
         return (p->wickets * 2) + (total_percent - p->economyRate);
     }
     else{
@@ -176,6 +188,17 @@ void loadInitialPlayers() {
         node->strikeRate = players[i].strikeRate;
         node->wickets = players[i].wickets;
         node->economyRate = players[i].economyRate;
+        
+        if (stringCompare(node->role, "Batsman")){
+            node->roleEnum = ROLE_BATSMAN;
+        }
+        else if (stringCompare(node->role, "Bowler")){
+            node->roleEnum = ROLE_BOWLER;
+        }
+        else{
+            node->roleEnum = ROLE_ALLROUNDER;
+        }
+        
         node->performanceIndex = calculatePerformance(node);
         node->next = NULL;
 
@@ -207,7 +230,7 @@ void updateteamListStrikeRate(int teamId) {
     int count = 0;
 
     while (player) {
-        if (stringCompare(player->role, "Batsman") || stringCompare(player->role, "All-rounder")) {
+        if (player->roleEnum == ROLE_BATSMAN || player->roleEnum == ROLE_ALLROUNDER) {
             totalSR += player->strikeRate;
             count++;
         }
@@ -258,20 +281,17 @@ void addNewPlayer() {
     fgets(p->name, MAX_NAME, stdin);
     removeNewline(p->name);
 
+    char ch;
+    while ((ch = getchar()) != '\n' && ch != EOF) {}
+
     printf("Role (1-Batsman,2-Bowler,3-All-rounder): ");
-    int role;
-    scanf("%d", &role);
+    int roleChoice;
+    scanf("%d", &roleChoice);
     while(getchar()!='\n');
 
-    if (role == 1) {
-        stringCopy(p->role, "Batsman");
-    }
-    else if (role == 2) {
-        stringCopy(p->role, "Bowler");
-    }
-    else {
-        stringCopy(p->role, "All-rounder");
-    }
+    PlayerRole selectedRole = (PlayerRole)roleChoice;
+    p->roleEnum = selectedRole;
+    stringCopy(p->role, roleToString(p->roleEnum));
 
     printf("Total Runs: "); scanf("%d", &p->totalRuns);
     printf("Batting Average: "); scanf("%f", &p->battingAverage);
@@ -364,23 +384,16 @@ void displayTopKPlayer() {
     scanf("%d", &K);
     while(getchar()!='\n');
 
+    PlayerRole selectedRole = (PlayerRole)roleChoice;
     char roleName[20];
-    if (roleChoice == 1) {
-        stringCopy(roleName, "Batsman");
-    }
-    else if (roleChoice == 2) {
-        stringCopy(roleName, "Bowler");
-    }
-    else {
-        stringCopy(roleName, "All-rounder");
-    }
+    stringCopy(roleName, roleToString(selectedRole));
 
     PlayerNode *arr[200];
     int count = 0;
 
     PlayerNode *p = teamList[teamId - 1].playersHead;
     while (p) {
-        if (stringCompare(p->role, roleName) && count < 200){
+        if (p->roleEnum == selectedRole && count < 200){
             arr[count++] = p;
         }
         p = p->next;
@@ -408,16 +421,9 @@ void displaySpecificRolePlayer() {
     scanf("%d", &choice);
     while(getchar()!='\n');
 
-    char roleName[20];
-    if (choice == 1) {
-        stringCopy(roleName, "Batsman");
-    }
-    else if (choice == 2) {
-        stringCopy(roleName, "Bowler");
-    }
-    else {
-        stringCopy(roleName, "All-rounder");
-    }
+    PlayerRole selectedRole = (PlayerRole)choice;
+    char roleName[MAX_ROLE_NAME];
+    stringCopy(roleName, roleToString(selectedRole));
 
     PlayerNode *list[500];
     int count = 0;
@@ -425,9 +431,10 @@ void displaySpecificRolePlayer() {
     for (int t = 0; t < 10; t++) {
         PlayerNode *player = teamList[t].playersHead;
         while (player) {
-            if (stringCompare(player->role, roleName) && count < 500){
+            if (player->roleEnum == selectedRole && count < 500){
                 list[count++] = player;
             }
+
             player = player->next;
         }
     }
