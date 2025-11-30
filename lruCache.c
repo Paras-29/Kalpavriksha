@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define HASH_SIZE 1000  
+#define HASH_MAP_SIZE 1000  
 #define MAX_CAPACITY 1000
 #define MIN_CAPACITY 1
 
@@ -17,11 +17,11 @@ typedef struct Node {
     struct Node *next;
 } Node;
 
-typedef struct hashMap {
+typedef struct HashMap {
     int key;
     Node* node;     
-    struct hashMap* next;
-} hashMap;
+    struct HashMap* next;
+} HashMap;
 
 typedef struct LRUCache {
     int capacity;
@@ -30,7 +30,7 @@ typedef struct LRUCache {
     Node *head;  
     Node *tail;  
 
-    hashMap* map[HASH_SIZE];
+    HashMap* map[HASH_MAP_SIZE];
 } LRUCache;
 
 LRUCache* cache = NULL;
@@ -56,7 +56,7 @@ void stringCopy(char *dest, const char *src) {
 }
 
 int hash(int key) {
-    return key % HASH_SIZE;
+    return key % HASH_MAP_SIZE;
 }
 
 bool isValidCapacity(int capacity){
@@ -66,7 +66,7 @@ bool isValidCapacity(int capacity){
 
 void hmPut(int key, Node* node) {
     int index = hash(key);
-    hashMap* newEntry = (hashMap*)malloc(sizeof(hashMap));
+    HashMap* newEntry = (HashMap*)malloc(sizeof(HashMap));
     newEntry->key = key;
     newEntry->node = node;
     newEntry->next = cache->map[index];
@@ -75,7 +75,7 @@ void hmPut(int key, Node* node) {
 
 Node* hmGet(int key) {
     int index = hash(key);
-    hashMap* entry = cache->map[index];
+    HashMap* entry = cache->map[index];
 
     while (entry != NULL) {
         if (entry->key == key){
@@ -88,7 +88,7 @@ Node* hmGet(int key) {
 
 void hmDelete(int key) {
     int index = hash(key);
-    hashMap *entry = cache->map[index], *prev = NULL;
+    HashMap *entry = cache->map[index], *prev = NULL;
 
     while (entry != NULL) {
         if (entry->key == key) {
@@ -148,7 +148,7 @@ void createCache(int capacity) {
     cache->size = 0;
     cache->head = cache->tail = NULL;
 
-    for (int i = 0; i < HASH_SIZE; i++){
+    for (int i = 0; i < HASH_MAP_SIZE; i++){
         cache->map[i] = NULL;
     }
 }
